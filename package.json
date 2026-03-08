@@ -1,0 +1,18 @@
+{
+  "name": "ipfs-hls",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/hls-ipfs-loader",
+    "packages/example-player",
+    "tests/e2e"
+  ],
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc --build",
+    "clean": "tsc --build --clean"
+  }
+}
