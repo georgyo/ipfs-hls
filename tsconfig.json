@@ -12,5 +12,11 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true
-  }
+  },
+  "include": [],
+  "references": [
+    { "path": "packages/hls-ipfs-loader" },
+    { "path": "packages/example-player" },
+    { "path": "tests/e2e" }
+  ]
 }
