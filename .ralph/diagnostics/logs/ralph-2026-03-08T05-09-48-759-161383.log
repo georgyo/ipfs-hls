@@ -1,0 +1,89 @@
+[2m2026-03-08T09:09:48.782473Z[0m [33m WARN[0m [2mralph::loop_runner[0m[2m:[0m Interactive mode requested but stdout is not a TTY, falling back to autonomous
+[2m2026-03-08T09:09:48.782732Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:09:48.782742Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:09:48.782746Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:09:48.782748Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:10:54.181267Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:10:54.181283Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:10:54.181288Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:10:54.181290Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:10:54.181305Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (1614 chars) into prompt
+[2m2026-03-08T09:10:54.181335Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (1 ready, 4 open, 0 closed) into prompt
+[2m2026-03-08T09:12:36.968882Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m build.done rejected: missing backpressure evidence
+[2m2026-03-08T09:12:36.968947Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:12:36.968955Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:12:36.968959Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:12:36.968961Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:12:36.968971Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (1614 chars) into prompt
+[2m2026-03-08T09:12:36.968996Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (3 ready, 3 open, 1 closed) into prompt
+[2m2026-03-08T09:13:24.433881Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:13:24.433895Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:13:24.433899Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:13:24.433901Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:13:24.433914Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (2655 chars) into prompt
+[2m2026-03-08T09:13:24.433939Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (3 ready, 3 open, 1 closed) into prompt
+[2m2026-03-08T09:21:59.763160Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m build.done rejected: backpressure checks failed [3mtests[0m[2m=[0mfalse [3mlint[0m[2m=[0mtrue [3mtypecheck[0m[2m=[0mtrue [3maudit[0m[2m=[0mfalse [3mcoverage[0m[2m=[0mfalse [3mduplication[0m[2m=[0mfalse
+[2m2026-03-08T09:21:59.763239Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:21:59.763249Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:21:59.763253Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:21:59.763254Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:21:59.763267Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (3506 chars) into prompt
+[2m2026-03-08T09:21:59.763292Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (2 ready, 2 open, 2 closed) into prompt
+[2m2026-03-08T09:22:44.828919Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:22:44.828931Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:22:44.828935Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:22:44.828937Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:22:44.828951Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (4864 chars) into prompt
+[2m2026-03-08T09:22:44.828975Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (2 ready, 2 open, 2 closed) into prompt
+[2m2026-03-08T09:26:22.189357Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m build.done rejected: backpressure checks failed [3mtests[0m[2m=[0mfalse [3mlint[0m[2m=[0mtrue [3mtypecheck[0m[2m=[0mtrue [3maudit[0m[2m=[0mtrue [3mcoverage[0m[2m=[0mfalse [3mduplication[0m[2m=[0mfalse
+[2m2026-03-08T09:26:22.189424Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:26:22.189433Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:26:22.189436Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:26:22.189438Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:26:22.189452Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (5808 chars) into prompt
+[2m2026-03-08T09:26:22.189478Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (1 ready, 1 open, 3 closed) into prompt
+[2m2026-03-08T09:27:08.684530Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:27:08.684544Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:27:08.684552Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:27:08.684555Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:27:08.684574Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (7269 chars) into prompt
+[2m2026-03-08T09:27:08.684615Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (1 ready, 1 open, 3 closed) into prompt
+[2m2026-03-08T09:29:34.320143Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m build.done rejected: backpressure checks failed [3mtests[0m[2m=[0mfalse [3mlint[0m[2m=[0mfalse [3mtypecheck[0m[2m=[0mfalse [3maudit[0m[2m=[0mfalse [3mcoverage[0m[2m=[0mfalse [3mduplication[0m[2m=[0mfalse
+[2m2026-03-08T09:29:34.320160Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m Task abandoned after 3 consecutive blocks [3mtask_id[0m[2m=[0mBackpressure checks failed. Fix tests/lint/typecheck/audit/coverage/complexity/duplication/specs before emitting build.done.
+[2m2026-03-08T09:29:34.320219Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:29:34.320227Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:29:34.320230Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:29:34.320232Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:29:34.320245Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (8329 chars) into prompt
+[2m2026-03-08T09:29:34.320268Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (0 ready, 0 open, 4 closed) into prompt
+[2m2026-03-08T09:30:57.240789Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:30:57.240804Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:30:57.240809Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:30:57.240811Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:30:57.240826Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (9438 chars) into prompt
+[2m2026-03-08T09:30:57.240851Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (1 ready, 1 open, 4 closed) into prompt
+[2m2026-03-08T09:32:18.965228Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m build.done rejected: backpressure checks failed [3mtests[0m[2m=[0mfalse [3mlint[0m[2m=[0mtrue [3mtypecheck[0m[2m=[0mtrue [3maudit[0m[2m=[0mfalse [3mcoverage[0m[2m=[0mfalse [3mduplication[0m[2m=[0mfalse
+[2m2026-03-08T09:32:18.965292Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:32:18.965300Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:32:18.965304Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:32:18.965306Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:32:18.965318Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (9974 chars) into prompt
+[2m2026-03-08T09:32:18.965344Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (0 ready, 0 open, 5 closed) into prompt
+[2m2026-03-08T09:33:46.465131Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:33:46.465148Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:33:46.465157Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:33:46.465159Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:33:46.465177Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (10949 chars) into prompt
+[2m2026-03-08T09:33:46.465204Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (1 ready, 1 open, 5 closed) into prompt
+[2m2026-03-08T09:36:20.914969Z[0m [33m WARN[0m [2mralph_core::event_loop[0m[2m:[0m build.done rejected: missing backpressure evidence
+[2m2026-03-08T09:36:20.915039Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
+[2m2026-03-08T09:36:20.915047Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-08T09:36:20.915051Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
+[2m2026-03-08T09:36:20.915053Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
+[2m2026-03-08T09:36:20.915069Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting scratchpad (12109 chars) into prompt
+[2m2026-03-08T09:36:20.915095Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (0 ready, 0 open, 6 closed) into prompt
+[2m2026-03-08T09:37:07.835885Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Completion event detected in JSONL [3mtopic[0m[2m=[0mLOOP_COMPLETE
+[2m2026-03-08T09:37:07.835921Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Completion event detected - terminating
+[2m2026-03-08T09:37:07.835925Z[0m [32m INFO[0m [2mralph::loop_runner[0m[2m:[0m Completion event LOOP_COMPLETE detected.
+[2m2026-03-08T09:37:07.835936Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Wrapping up: completed. 13 iterations in 27m 19s. [3mreason[0m[2m=[0mcompleted [3miterations[0m[2m=[0m13 [3mduration[0m[2m=[0m27m 19s
+[2m2026-03-08T09:37:07.836931Z[0m [32m INFO[0m [2mralph_core::landing[0m[2m:[0m Beginning landing sequence [3mloop_id[0m[2m=[0mprimary
