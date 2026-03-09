@@ -2,7 +2,7 @@
 
 **Status:** Completed successfully
 **Iterations:** 1
-**Duration:** 3m 37s
+**Duration:** 4m 8s
 
 ## Tasks
 
@@ -14,4 +14,4 @@ _No events recorded._
 
 ## Final Commit
 
-f54e313: Add Svelte example app for IPFS HLS video playback
+42d5093: Add public STUN servers to IPFS examples for better WebRTC connectivity

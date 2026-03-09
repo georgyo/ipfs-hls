@@ -2,3 +2,5 @@
 {"ts":"2026-03-08T09:37:07.836914528Z","type":{"kind":"loop_completed","reason":"completion_promise"}}
 {"ts":"2026-03-09T23:17:31.568225328Z","type":{"kind":"loop_started","prompt":"Let's make another example here that uses svelte as a frame work for using these.\n\nIt should\n - Have an input feild to load IPFS paths\n - Have a client side history of previously loaded paths\n - The history should have these two items as default as presets\n   - Charade /ipfs/QmbdmJ2JRvEFhWWzHKrAcjjBdkcs46F2N7ggZnrdKKAu4s/manifest.m3u8\n   - Big Buck Bunny /ipfs/QmfL9GReWbQbwgrQG4j3aFJaJb6UEyeDfuy8GRQcH5F5NS/manifest.m3u8\n - Click on a history item should load that path and start playing\n - If there are multiple HLS streams of different quality, there should be a quality selector\n - The default quality should be auto selecting\n"}}
 {"ts":"2026-03-09T23:21:08.753155798Z","type":{"kind":"loop_completed","reason":"completion_promise"}}
+{"ts":"2026-03-09T23:28:56.670105193Z","type":{"kind":"loop_started","prompt":"Add a public STUN server for IPFS to all examples"}}
+{"ts":"2026-03-09T23:33:05.018240779Z","type":{"kind":"loop_completed","reason":"completion_promise"}}

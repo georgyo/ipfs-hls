@@ -1,6 +1,7 @@
 [2m2026-03-09T23:17:31.568010Z[0m [33m WARN[0m [2mralph::loop_runner[0m[2m:[0m Interactive mode requested but stdout is not a TTY, falling back to autonomous
 [2m2026-03-09T23:17:31.568272Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory injection check: enabled=true, inject=Auto, workspace_root="/run/host/home/ai-shammas/Code/ipfs-hls"
-[2m2026-03-09T23:17:31.568281Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Looking for memories at: "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
+[2m2026-03-09T23:17:31.568281Z2026-03-09T23:28:06.274388Z  INFO ralph_tui::app: Ctrl+C detected, signaling abort
+ "/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/memories.md" (exists: false)
 [2m2026-03-09T23:17:31.568285Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Successfully loaded 0 memories from store
 [2m2026-03-09T23:17:31.568287Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Memory store is empty - no memories to inject
 [2m2026-03-09T23:17:31.568319Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Injecting ready tasks (0 ready, 0 open, 6 closed) into prompt
@@ -9,3 +10,7 @@
 [2m2026-03-09T23:21:08.752131Z[0m [32m INFO[0m [2mralph::loop_runner[0m[2m:[0m Completion event LOOP_COMPLETE detected.
 [2m2026-03-09T23:21:08.752138Z[0m [32m INFO[0m [2mralph_core::event_loop[0m[2m:[0m Wrapping up: completed. 1 iterations in 3m 37s. [3mreason[0m[2m=[0mcompleted [3miterations[0m[2m=[0m1 [3mduration[0m[2m=[0m3m 37s
 [2m2026-03-09T23:21:08.753174Z[0m [32m INFO[0m [2mralph_core::landing[0m[2m:[0m Beginning landing sequence [3mloop_id[0m[2m=[0mprimary
+[2m2026-03-09T23:21:08.765333Z[0m [32m INFO[0m [2mralph_core::landing[0m[2m:[0m Auto-committed changes during landing [3mloop_id[0m[2m=[0mprimary [3mcommit[0m[2m=[0mSome("5a41271988ef9428246db81717cd9aea2fcf6f71") [3mfiles[0m[2m=[0m14
+[2m2026-03-09T23:21:09.324921Z[0m [32m INFO[0m [2mralph_core::landing[0m[2m:[0m Generated handoff file [3mloop_id[0m[2m=[0mprimary [3mpath[0m[2m=[0m/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/handoff.md [3mcompleted[0m[2m=[0m7 [3mopen[0m[2m=[0m0
+[2m2026-03-09T23:21:09.326119Z[0m [32m INFO[0m [2mralph_core::loop_completion[0m[2m:[0m Landing completed with auto-commit [3mcommit[0m[2m=[0mSome("5a41271988ef9428246db81717cd9aea2fcf6f71") [3mhandoff[0m[2m=[0m/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/handoff.md
+[2m2026-03-09T23:21:09.326129Z[0m [32m INFO[0m [2mralph::loop_runner[0m[2m:[0m Primary loop landed successfully [3mcommitted[0m[2m=[0mtrue [3mhandoff[0m[2m=[0m/run/host/home/ai-shammas/Code/ipfs-hls/.ralph/agent/handoff.md [3mopen_tasks[0m[2m=[0m0

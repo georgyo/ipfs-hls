@@ -1,18 +1,22 @@
-# Svelte Example App
+# Add public STUN server for IPFS to all examples
 
-## Plan
-Build a Svelte-based example app for IPFS HLS playback at `packages/example-svelte`.
+## Understanding
+Both examples (`example-player` and `example-svelte`) use `createHelia()` with default config.
+The `@libp2p/webrtc` library has internal default STUN servers but they're not explicitly configured.
+The objective is to explicitly configure public STUN servers for better WebRTC connectivity.
 
-## Features Implemented
-- Svelte 5 app with Vite, node polyfills for IPFS/Helia
-- Input field to load arbitrary IPFS paths
-- Client-side history persisted to localStorage with default presets (Charade, Big Buck Bunny)
-- Click history item to load and play
-- Quality selector (auto + per-level) when multiple HLS streams available
-- Dark theme UI matching the project style
+## Approach
+1. Use `libp2pDefaults()` from helia to get the default libp2p config
+2. Replace the transports array with one that includes explicit STUN server configuration
+3. Pass the modified config to `createHelia({ libp2p })`
 
-## Technical Notes
-- `@sveltejs/vite-plugin-svelte@^6.2.4` is needed for vite 7 compatibility
-- Svelte 5 runes API used (`$state`, `$effect`)
-- Added to root workspace and tsconfig references
-- Build and typecheck pass cleanly
+## STUN servers used
+- Google: `stun:stun.l.google.com:19302`, `stun:stun1.l.google.com:19302`
+- Twilio: `stun:global.stun.twilio.com:3478`
+- Cloudflare: `stun:stun.cloudflare.com:3478`
+
+## Implementation
+- Updated `packages/example-player/src/main.ts` - added explicit STUN config
+- Updated `packages/example-svelte/src/App.svelte` - added explicit STUN config
+- Both typecheck and build pass successfully
+- Unit tests pass (12/12)
