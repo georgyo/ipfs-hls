@@ -1,8 +1,17 @@
 <script lang="ts">
   import Hls from 'hls.js'
   import type { FragmentLoaderConstructor, PlaylistLoaderConstructor, Level } from 'hls.js'
-  import { createHelia } from 'helia'
+  import { createHelia, libp2pDefaults } from 'helia'
+  import { webRTC, webRTCDirect } from '@libp2p/webrtc'
+  import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'
+  import { webSockets } from '@libp2p/websockets'
   import { createIpfsLoader } from 'hls-ipfs-loader'
+
+  const ICE_SERVERS: RTCIceServer[] = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    { urls: ['stun:global.stun.twilio.com:3478'] },
+    { urls: ['stun:stun.cloudflare.com:3478'] },
+  ]
 
   interface HistoryEntry {
     label: string
@@ -97,7 +106,15 @@
 
     try {
       setStatus('Creating Helia IPFS node...', 'loading')
-      heliaNode = await createHelia()
+      const rtcConfig: RTCConfiguration = { iceServers: ICE_SERVERS }
+      const libp2p = libp2pDefaults()
+      libp2p.transports = [
+        circuitRelayTransport(),
+        webRTC({ rtcConfiguration: rtcConfig }),
+        webRTCDirect({ rtcConfiguration: rtcConfig }),
+        webSockets(),
+      ]
+      heliaNode = await createHelia({ libp2p })
 
       setStatus('Helia node ready. Initializing HLS player...', 'loading')
       const IpfsLoader = createIpfsLoader({ helia: heliaNode })
