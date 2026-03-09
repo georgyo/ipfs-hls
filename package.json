@@ -5,6 +5,7 @@
   "workspaces": [
     "packages/hls-ipfs-loader",
     "packages/example-player",
+    "packages/example-svelte",
     "tests/e2e"
   ],
   "devDependencies": {
