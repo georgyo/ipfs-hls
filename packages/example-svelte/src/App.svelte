@@ -55,7 +55,7 @@
   let uploadRate = $state('0 B/s')
   let prevSent = 0
   let prevRecv = 0
-  let prevTime = Date.now()
+  let prevTime = 0
 
   function formatRate(bytesPerSec: number): string {
     if (bytesPerSec < 1024) return `${Math.round(bytesPerSec)} B/s`
@@ -63,17 +63,21 @@
     return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
   }
 
-  function onMetrics(metrics: Record<string, any>) {
-    const now = Date.now()
-    const elapsed = (now - prevTime) / 1000
-    if (elapsed <= 0) return
+  function updateBandwidth() {
+    if (!heliaNode?.libp2p.metrics) return
+    const stats = (heliaNode.libp2p.metrics as any).transferStats as Map<string, number> | undefined
+    if (!stats) return
 
-    const sent = Number(metrics['global sent'] ?? 0)
-    const recv = Number(metrics['global received'] ?? 0)
+    const now = Date.now()
+    const sent = stats.get('global sent') ?? 0
+    const recv = stats.get('global received') ?? 0
 
     if (prevTime > 0) {
-      downloadRate = formatRate((recv - prevRecv) / elapsed)
-      uploadRate = formatRate((sent - prevSent) / elapsed)
+      const elapsed = (now - prevTime) / 1000
+      if (elapsed > 0) {
+        downloadRate = formatRate((recv - prevRecv) / elapsed)
+        uploadRate = formatRate((sent - prevSent) / elapsed)
+      }
     }
 
     prevSent = sent
@@ -259,7 +263,7 @@
         maxConnections: 100,
       }
       libp2p.metrics = simpleMetrics({
-        onMetrics,
+        onMetrics: () => {},
         intervalMs: 1000,
       })
       const blockstore = new IDBBlockstore('ipfs-hls-blocks')
@@ -338,13 +342,15 @@
   $effect(() => {
     init()
     updateCacheSize()
-    const interval = setInterval(updateCacheSize, 10000)
+    const cacheInterval = setInterval(updateCacheSize, 10000)
+    const bwInterval = setInterval(updateBandwidth, 1000)
     window.addEventListener('hashchange', onHashChange)
     const onVideoState = () => updateHash()
     videoEl?.addEventListener('pause', onVideoState)
     videoEl?.addEventListener('seeked', onVideoState)
     return () => {
-      clearInterval(interval)
+      clearInterval(cacheInterval)
+      clearInterval(bwInterval)
       window.removeEventListener('hashchange', onHashChange)
       videoEl?.removeEventListener('pause', onVideoState)
       videoEl?.removeEventListener('seeked', onVideoState)
