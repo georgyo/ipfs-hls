@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@helia/unixfs": "^7.0.4",
+    "@libp2p/simple-metrics": "^2.0.10",
     "blockstore-idb": "^3.0.1",
     "helia": "^6.0.21",
     "hls-ipfs-loader": "^0.1.0",

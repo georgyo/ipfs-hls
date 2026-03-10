@@ -6,6 +6,8 @@
   import { webRTC, webRTCDirect } from '@libp2p/webrtc'
   import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'
   import { webSockets } from '@libp2p/websockets'
+  import { simpleMetrics } from '@libp2p/simple-metrics'
+  import { multiaddr } from '@multiformats/multiaddr'
   import { createIpfsLoader } from 'hls-ipfs-loader'
 
   const ICE_SERVERS: RTCIceServer[] = [
@@ -45,6 +47,44 @@
   let peers = $state<PeerInfo[]>([])
   let showPeers = $state(false)
   let cacheSize = $state('')
+  let dialAddr = $state('')
+  let dialStatus = $state('')
+  let showAddrs = $state(false)
+  let multiaddrs = $state<string[]>([])
+  let downloadRate = $state('0 B/s')
+  let uploadRate = $state('0 B/s')
+  let prevSent = 0
+  let prevRecv = 0
+  let prevTime = Date.now()
+
+  function formatRate(bytesPerSec: number): string {
+    if (bytesPerSec < 1024) return `${Math.round(bytesPerSec)} B/s`
+    if (bytesPerSec < 1024 * 1024) return `${(bytesPerSec / 1024).toFixed(1)} KB/s`
+    return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
+  }
+
+  function onMetrics(metrics: Record<string, any>) {
+    const now = Date.now()
+    const elapsed = (now - prevTime) / 1000
+    if (elapsed <= 0) return
+
+    const sent = Number(metrics['global sent'] ?? 0)
+    const recv = Number(metrics['global received'] ?? 0)
+
+    if (prevTime > 0) {
+      downloadRate = formatRate((recv - prevRecv) / elapsed)
+      uploadRate = formatRate((sent - prevSent) / elapsed)
+    }
+
+    prevSent = sent
+    prevRecv = recv
+    prevTime = now
+  }
+
+  function refreshMultiaddrs() {
+    if (!heliaNode) return
+    multiaddrs = heliaNode.libp2p.getMultiaddrs().map(ma => ma.toString())
+  }
 
   function loadHistory(): HistoryEntry[] {
     try {
@@ -82,6 +122,23 @@
         relay: addr.includes('/p2p-circuit/'),
       }
     })
+    if (showAddrs) refreshMultiaddrs()
+  }
+
+  async function dialPeer(addr: string) {
+    if (!heliaNode || !addr.trim()) return
+    dialStatus = 'Connecting...'
+    try {
+      const ma = multiaddr(addr.trim())
+      await heliaNode.libp2p.dial(ma)
+      dialStatus = 'Connected!'
+      dialAddr = ''
+      refreshPeers()
+      setTimeout(() => { dialStatus = '' }, 3000)
+    } catch (err) {
+      dialStatus = err instanceof Error ? err.message : 'Failed to connect'
+      setTimeout(() => { dialStatus = '' }, 5000)
+    }
   }
 
   function setStatus(message: string, cls: 'loading' | 'ready' | 'error') {
@@ -201,6 +258,10 @@
         minConnections: 5,
         maxConnections: 100,
       }
+      libp2p.metrics = simpleMetrics({
+        onMetrics,
+        intervalMs: 1000,
+      })
       const blockstore = new IDBBlockstore('ipfs-hls-blocks')
       await blockstore.open()
       heliaNode = await createHelia({ libp2p, blockstore })
@@ -335,13 +396,40 @@
 
   <div class="peers-section">
     {#if heliaNode}
-      <p class="our-peer-id">Peer ID: <span class="peer-id">{heliaNode.libp2p.peerId.toString()}</span></p>
+      <div class="bandwidth">
+        <span class="bw-down">↓ {downloadRate}</span>
+        <span class="bw-up">↑ {uploadRate}</span>
+      </div>
+      <button class="our-peer-id" onclick={() => { showAddrs = !showAddrs; if (showAddrs) refreshMultiaddrs() }}>
+        <span>Peer ID: <span class="peer-id">{heliaNode.libp2p.peerId.toString()}</span></span>
+        <span class="toggle">{showAddrs ? '▾' : '▸'}</span>
+      </button>
+      {#if showAddrs}
+        {#if multiaddrs.length === 0}
+          <p class="empty">No listening addresses.</p>
+        {:else}
+          <ul class="multiaddr-list">
+            {#each multiaddrs as addr}
+              <li class="multiaddr-item">{addr}</li>
+            {/each}
+          </ul>
+        {/if}
+      {/if}
     {/if}
     <button class="peers-header" onclick={() => showPeers = !showPeers}>
       <h2>Peers ({peers.length})</h2>
       <span class="toggle">{showPeers ? '▾' : '▸'}</span>
     </button>
     {#if showPeers}
+      <form class="dial-form" onsubmit={(e) => { e.preventDefault(); dialPeer(dialAddr) }}>
+        <input
+          type="text"
+          bind:value={dialAddr}
+          placeholder="/ip4/.../tcp/.../p2p/PeerId"
+        />
+        <button type="submit" disabled={!dialAddr.trim()}>Dial</button>
+      </form>
+      {#if dialStatus}<p class="dial-status">{dialStatus}</p>{/if}
       {#if peers.length === 0}
         <p class="empty">No connected peers.</p>
       {:else}
@@ -425,6 +513,23 @@
   .status.error {
     background: #3a1c1c;
     color: #fc8181;
+  }
+
+  .bandwidth {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    font-family: monospace;
+  }
+
+  .bw-down {
+    color: #68d391;
+  }
+
+  .bw-up {
+    color: #63b3ed;
   }
 
   form {
@@ -568,9 +673,88 @@
   }
 
   .our-peer-id {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    width: 100%;
     font-size: 0.8rem;
     color: #718096;
     word-break: break-all;
+    margin: 0 0 0.5rem 0;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .our-peer-id .toggle {
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+
+  .multiaddr-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .multiaddr-item {
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: #a0aec0;
+    word-break: break-all;
+    padding: 0.3rem 0.6rem;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+  }
+
+  .dial-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .dial-form input {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+    background: #2d3748;
+    color: #e0e0e0;
+    font-size: 0.85rem;
+  }
+
+  .dial-form input::placeholder {
+    color: #718096;
+  }
+
+  .dial-form button {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    background: #4299e1;
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .dial-form button:hover {
+    background: #3182ce;
+  }
+
+  .dial-form button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .dial-status {
+    font-size: 0.8rem;
+    color: #a0aec0;
     margin: 0 0 0.5rem 0;
   }
 
