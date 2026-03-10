@@ -25,7 +25,49 @@
     path: string
   }
 
+  interface BlockedPeer {
+    blockedAt: number
+  }
+
   const STORAGE_KEY = 'ipfs-hls-history'
+  const BLOCKLIST_KEY = 'ipfs-hls-peer-blocklist'
+  const BLOCK_DURATION_MS = 10 * 60 * 1000
+
+  function loadBlocklist(): Record<string, BlockedPeer> {
+    try {
+      const stored = sessionStorage.getItem(BLOCKLIST_KEY)
+      if (!stored) return {}
+      const list = JSON.parse(stored) as Record<string, BlockedPeer>
+      const now = Date.now()
+      for (const id in list) {
+        if (now - list[id].blockedAt >= BLOCK_DURATION_MS) delete list[id]
+      }
+      return list
+    } catch { return {} }
+  }
+
+  function saveBlocklist(list: Record<string, BlockedPeer>): void {
+    sessionStorage.setItem(BLOCKLIST_KEY, JSON.stringify(list))
+  }
+
+  function blockPeer(peerId: string): void {
+    const list = loadBlocklist()
+    list[peerId] = { blockedAt: Date.now() }
+    saveBlocklist(list)
+    blockedCount = Object.keys(list).length
+  }
+
+  function isPeerBlocked(peerId: string): boolean {
+    const list = loadBlocklist()
+    const entry = list[peerId]
+    if (!entry) return false
+    if (Date.now() - entry.blockedAt >= BLOCK_DURATION_MS) {
+      delete list[peerId]
+      saveBlocklist(list)
+      return false
+    }
+    return true
+  }
   const DEFAULT_PRESETS: HistoryEntry[] = [
     { label: 'Charade', path: '/ipfs/QmbdmJ2JRvEFhWWzHKrAcjjBdkcs46F2N7ggZnrdKKAu4s/manifest.m3u8' },
     { label: 'Big Buck Bunny', path: '/ipfs/QmfL9GReWbQbwgrQG4j3aFJaJb6UEyeDfuy8GRQcH5F5NS/manifest.m3u8' },
@@ -42,6 +84,7 @@
   let heliaNode = $state<Awaited<ReturnType<typeof createHelia>> | null>(null)
   let peers = $state<PeerInfo[]>([])
   let showPeers = $state(false)
+  let blockedCount = $state(Object.keys(loadBlocklist()).length)
 
   function loadHistory(): HistoryEntry[] {
     try {
@@ -142,6 +185,9 @@
         minConnections: 5,
         maxConnections: 50,
       }
+      libp2p.connectionGater = {
+        denyDialPeer: (peerId: { toString(): string }) => isPeerBlocked(peerId.toString()),
+      }
       heliaNode = await createHelia({ libp2p })
 
       setStatus('Helia node ready. Initializing HLS player...', 'loading')
@@ -193,13 +239,26 @@
 
   $effect(() => {
     if (!heliaNode) return
-    const handler = () => refreshPeers()
-    heliaNode.libp2p.addEventListener('connection:open', handler)
-    heliaNode.libp2p.addEventListener('connection:close', handler)
+    const openHandler = () => refreshPeers()
+    const closeHandler = (evt: CustomEvent<any>) => {
+      const conn = evt.detail
+      if (conn) {
+        const timeline = conn.timeline
+        const status = conn.status
+        const shortLived = timeline?.close && timeline?.open && (timeline.close - timeline.open < 5000)
+        const abnormal = status === 'aborted' || status === 'reset'
+        if (shortLived || abnormal) {
+          blockPeer(conn.remotePeer.toString())
+        }
+      }
+      refreshPeers()
+    }
+    heliaNode.libp2p.addEventListener('connection:open', openHandler)
+    heliaNode.libp2p.addEventListener('connection:close', closeHandler)
     refreshPeers()
     return () => {
-      heliaNode!.libp2p.removeEventListener('connection:open', handler)
-      heliaNode!.libp2p.removeEventListener('connection:close', handler)
+      heliaNode!.libp2p.removeEventListener('connection:open', openHandler)
+      heliaNode!.libp2p.removeEventListener('connection:close', closeHandler)
     }
   })
 </script>
@@ -234,7 +293,7 @@
 
   <div class="peers-section">
     <button class="peers-header" onclick={() => showPeers = !showPeers}>
-      <h2>Peers ({peers.length})</h2>
+      <h2>Peers ({peers.length}){#if blockedCount > 0} | Blocked ({blockedCount}){/if}</h2>
       <span class="toggle">{showPeers ? '▾' : '▸'}</span>
     </button>
     {#if showPeers}
