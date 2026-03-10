@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@helia/unixfs": "^7.0.4",
+    "blockstore-idb": "^3.0.1",
     "helia": "^6.0.21",
     "hls-ipfs-loader": "^0.1.0",
     "hls.js": "^1.6.15"

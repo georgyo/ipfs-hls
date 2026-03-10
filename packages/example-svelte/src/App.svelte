@@ -2,6 +2,7 @@
   import Hls from 'hls.js'
   import type { FragmentLoaderConstructor, PlaylistLoaderConstructor, Level } from 'hls.js'
   import { createHelia, libp2pDefaults } from 'helia'
+  import { IDBBlockstore } from 'blockstore-idb'
   import { webRTC, webRTCDirect } from '@libp2p/webrtc'
   import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'
   import { webSockets } from '@libp2p/websockets'
@@ -188,7 +189,9 @@
       libp2p.connectionGater = {
         denyDialPeer: (peerId: { toString(): string }) => isPeerBlocked(peerId.toString()),
       }
-      heliaNode = await createHelia({ libp2p })
+      const blockstore = new IDBBlockstore('ipfs-hls-blocks')
+      await blockstore.open()
+      heliaNode = await createHelia({ libp2p, blockstore })
 
       setStatus('Helia node ready. Initializing HLS player...', 'loading')
       const IpfsLoader = createIpfsLoader({ helia: heliaNode })

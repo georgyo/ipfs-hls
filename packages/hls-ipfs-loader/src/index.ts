@@ -58,23 +58,48 @@ function makeStats(): LoaderStats {
 
 /**
  * Resolve an IPFS path with nested directories by walking the DAG using `ls`.
+ * Uses a cache to skip already-resolved path prefixes.
  */
 async function resolveIpfsPath(
   fs: UnixFS,
   rootCid: CID,
   path: string,
+  pathCache: Map<string, CID>,
 ): Promise<CID> {
   if (!path || path === '/') return rootCid
 
-  const segments = path.split('/').filter(Boolean)
-  let currentCid = rootCid
+  const cacheKey = `${rootCid.toString()}${path}`
 
-  for (const segment of segments) {
+  // Fast exit: full path already resolved
+  const cached = pathCache.get(cacheKey)
+  if (cached) return cached
+
+  const segments = path.split('/').filter(Boolean)
+
+  // Find the deepest cached prefix to skip already-resolved segments
+  let startIndex = 0
+  let currentCid = rootCid
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const prefixKey = `${rootCid.toString()}/${segments.slice(0, i + 1).join('/')}`
+    const prefixCid = pathCache.get(prefixKey)
+    if (prefixCid) {
+      currentCid = prefixCid
+      startIndex = i + 1
+      break
+    }
+  }
+
+  // Walk only the remaining uncached segments
+  for (let i = startIndex; i < segments.length; i++) {
+    const segment = segments[i]
     let found = false
     for await (const entry of fs.ls(currentCid)) {
       if (entry.name === segment) {
         currentCid = entry.cid
         found = true
+        // Cache each intermediate resolution
+        const intermediateKey = `${rootCid.toString()}/${segments.slice(0, i + 1).join('/')}`
+        pathCache.set(intermediateKey, currentCid)
         break
       }
     }
@@ -83,6 +108,8 @@ async function resolveIpfsPath(
     }
   }
 
+  // Cache the full path
+  pathCache.set(cacheKey, currentCid)
   return currentCid
 }
 
@@ -92,9 +119,10 @@ async function resolveIpfsPath(
 async function fetchFromIpfs(
   fs: UnixFS,
   ipfsPath: IpfsPath,
+  pathCache: Map<string, CID>,
   signal?: AbortSignal,
 ): Promise<Uint8Array> {
-  const resolvedCid = await resolveIpfsPath(fs, ipfsPath.cid, ipfsPath.path)
+  const resolvedCid = await resolveIpfsPath(fs, ipfsPath.cid, ipfsPath.path, pathCache)
   const chunks: Uint8Array[] = []
   let totalLength = 0
 
@@ -136,6 +164,7 @@ export function createIpfsLoader(
   config: IpfsLoaderConfig,
 ): new (hlsConfig: Hls['config']) => Loader<LoaderContext> {
   const fs = createUnixFs(config.helia)
+  const pathCache = new Map<string, CID>()
 
   return class IpfsLoader implements Loader<LoaderContext> {
     context: LoaderContext | null = null
@@ -175,7 +204,7 @@ export function createIpfsLoader(
 
       this.abortController = new AbortController()
 
-      fetchFromIpfs(fs, ipfsPath, this.abortController.signal)
+      fetchFromIpfs(fs, ipfsPath, pathCache, this.abortController.signal)
         .then((data) => {
           if (this.stats.aborted) return
 
