@@ -183,7 +183,7 @@
       ]
       libp2p.connectionManager = {
         minConnections: 5,
-        maxConnections: 50,
+        maxConnections: 100,
       }
       libp2p.connectionGater = {
         denyDialPeer: (peerId: { toString(): string }) => isPeerBlocked(peerId.toString()),
@@ -242,14 +242,8 @@
     const openHandler = () => refreshPeers()
     const closeHandler = (evt: CustomEvent<any>) => {
       const conn = evt.detail
-      if (conn) {
-        const timeline = conn.timeline
-        const status = conn.status
-        const shortLived = timeline?.close && timeline?.open && (timeline.close - timeline.open < 5000)
-        const abnormal = status === 'aborted' || status === 'reset'
-        if (shortLived || abnormal) {
-          blockPeer(conn.remotePeer.toString())
-        }
+      if (conn?.timeline && !conn.timeline.upgraded) {
+        blockPeer(conn.remotePeer.toString())
       }
       refreshPeers()
     }
