@@ -44,6 +44,7 @@
   let heliaNode = $state<Awaited<ReturnType<typeof createHelia>> | null>(null)
   let peers = $state<PeerInfo[]>([])
   let showPeers = $state(false)
+  let cacheSize = $state('')
 
   function loadHistory(): HistoryEntry[] {
     try {
@@ -75,7 +76,7 @@
       const peerId = conn.remotePeer.toString()
       const addr = conn.remoteAddr.toString()
       return {
-        id: peerId.slice(0, 8) + '...' + peerId.slice(-4),
+        id: peerId,
         address: addr,
         direction: conn.direction,
         relay: addr.includes('/p2p-circuit/'),
@@ -88,10 +89,38 @@
     statusClass = cls
   }
 
+  function parseHash(hash: string): { path: string; quality?: string; time?: number } {
+    const raw = hash.startsWith('#') ? hash.slice(1) : hash
+    const qIndex = raw.indexOf('?')
+    if (qIndex === -1) return { path: raw }
+    const path = raw.slice(0, qIndex)
+    const params = new URLSearchParams(raw.slice(qIndex + 1))
+    const quality = params.get('q') ?? undefined
+    const time = params.has('t') ? Number(params.get('t')) : undefined
+    return { path, quality, time: time && !isNaN(time) ? time : undefined }
+  }
+
+  function updateHash() {
+    if (!ipfsPath) return
+    const params = new URLSearchParams()
+    if (currentLevel >= 0 && levels[currentLevel]) {
+      params.set('q', qualityLabel(levels[currentLevel]))
+    }
+    if (videoEl && videoEl.currentTime > 0) {
+      params.set('t', String(Math.floor(videoEl.currentTime)))
+    }
+    const qs = params.toString()
+    location.hash = qs ? `${ipfsPath}?${qs}` : ipfsPath
+  }
+
+  let pendingQuality: string | undefined = undefined
+  let pendingTime: number | undefined = undefined
+
   function loadSource(path: string) {
     if (!hls) return
     addToHistory(path)
     ipfsPath = path
+    location.hash = path
     levels = []
     currentLevel = -1
     setStatus('Loading manifest from IPFS...', 'loading')
@@ -112,10 +141,38 @@
     saveHistory()
   }
 
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+  }
+
+  async function updateCacheSize() {
+    try {
+      const estimate = await navigator.storage.estimate()
+      cacheSize = formatBytes(estimate.usage ?? 0)
+    } catch {
+      cacheSize = ''
+    }
+  }
+
+  async function clearBlockstoreCache() {
+    const databases = await indexedDB.databases()
+    for (const db of databases) {
+      if (db.name?.startsWith('ipfs-hls-blocks')) {
+        indexedDB.deleteDatabase(db.name)
+      }
+    }
+    setStatus('Cache cleared. Reloading...', 'loading')
+    location.reload()
+  }
+
   function setQuality(levelIndex: number) {
     if (!hls) return
     hls.currentLevel = levelIndex
     currentLevel = levelIndex
+    updateHash()
   }
 
   function qualityLabel(level: Level): string {
@@ -159,6 +216,18 @@
       hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
         levels = hls!.levels
         currentLevel = hls!.currentLevel
+
+        if (pendingQuality) {
+          const idx = levels.findIndex(l => qualityLabel(l) === pendingQuality)
+          if (idx >= 0) setQuality(idx)
+          pendingQuality = undefined
+        }
+
+        if (pendingTime !== undefined) {
+          videoEl.currentTime = pendingTime
+          pendingTime = undefined
+        }
+
         setStatus('Manifest loaded. Playing video...', 'ready')
         videoEl.play().catch(() => {
           setStatus('Ready to play (click play button)', 'ready')
@@ -181,16 +250,43 @@
       })
 
       hls.attachMedia(videoEl)
-      setStatus('Ready. Enter an IPFS path or select from history.', 'ready')
+
+      const initial = parseHash(location.hash)
+      if (initial.path) {
+        pendingQuality = initial.quality
+        pendingTime = initial.time
+        loadSource(initial.path)
+      } else {
+        setStatus('Ready. Enter an IPFS path or select from history.', 'ready')
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       setStatus(`Failed to initialize: ${message}`, 'error')
     }
   }
 
+  function onHashChange() {
+    const parsed = parseHash(location.hash)
+    if (parsed.path && parsed.path !== ipfsPath) {
+      pendingQuality = parsed.quality
+      pendingTime = parsed.time
+      loadSource(parsed.path)
+    }
+  }
+
   $effect(() => {
     init()
+    updateCacheSize()
+    const interval = setInterval(updateCacheSize, 10000)
+    window.addEventListener('hashchange', onHashChange)
+    const onVideoState = () => updateHash()
+    videoEl?.addEventListener('pause', onVideoState)
+    videoEl?.addEventListener('seeked', onVideoState)
     return () => {
+      clearInterval(interval)
+      window.removeEventListener('hashchange', onHashChange)
+      videoEl?.removeEventListener('pause', onVideoState)
+      videoEl?.removeEventListener('seeked', onVideoState)
       hls?.destroy()
     }
   })
@@ -238,6 +334,9 @@
   {/if}
 
   <div class="peers-section">
+    {#if heliaNode}
+      <p class="our-peer-id">Peer ID: <span class="peer-id">{heliaNode.libp2p.peerId.toString()}</span></p>
+    {/if}
     <button class="peers-header" onclick={() => showPeers = !showPeers}>
       <h2>Peers ({peers.length})</h2>
       <span class="toggle">{showPeers ? '▾' : '▸'}</span>
@@ -277,6 +376,11 @@
         {/each}
       </ul>
     {/if}
+  </div>
+
+  <div class="cache-controls">
+    <button class="clear-cache" onclick={clearBlockstoreCache}>Clear Block Cache</button>
+    {#if cacheSize}<span class="cache-size">{cacheSize} used</span>{/if}
   </div>
 </main>
 
@@ -463,6 +567,13 @@
     margin-bottom: 1rem;
   }
 
+  .our-peer-id {
+    font-size: 0.8rem;
+    color: #718096;
+    word-break: break-all;
+    margin: 0 0 0.5rem 0;
+  }
+
   .peers-header {
     display: flex;
     align-items: center;
@@ -538,5 +649,34 @@
   .peer-badge.relay {
     background: #3a3a1c;
     color: #ecc94b;
+  }
+
+  .cache-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 1rem auto 0;
+  }
+
+  .cache-size {
+    font-size: 0.85rem;
+    color: #718096;
+  }
+
+  .clear-cache {
+    padding: 0.5rem 1rem;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+    background: #2d3748;
+    color: #a0aec0;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .clear-cache:hover {
+    background: #3a1c1c;
+    border-color: #fc8181;
+    color: #fc8181;
   }
 </style>
