@@ -17,6 +17,12 @@ export class DirectGatewayBroker implements BlockBroker {
 
   async retrieve(cid: CID, options: BlockRetrievalOptions = {}): Promise<Uint8Array> {
     const controller = new AbortController()
+
+    // If the caller's signal is already aborted, mirror that immediately
+    if (options.signal?.aborted === true) {
+      controller.abort()
+      throw new DOMException('The operation was aborted.', 'AbortError')
+    }
     const onAbort = () => controller.abort()
     options.signal?.addEventListener('abort', onAbort, { once: true })
 
