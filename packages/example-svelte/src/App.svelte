@@ -3,7 +3,6 @@
   import type { FragmentLoaderConstructor, PlaylistLoaderConstructor, Level } from 'hls.js'
   import { createHelia, libp2pDefaults } from 'helia'
   import { bitswap, trustlessGateway } from '@helia/block-brokers'
-  import { httpGatewayRouting, libp2pRouting } from '@helia/routers'
   import { IDBBlockstore } from 'blockstore-idb'
   import { webRTC, webRTCDirect } from '@libp2p/webrtc'
   import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'
@@ -11,6 +10,7 @@
   import { simpleMetrics } from '@libp2p/simple-metrics'
   import { multiaddr } from '@multiformats/multiaddr'
   import { createIpfsLoader } from 'hls-ipfs-loader'
+  import { DirectGatewayBroker } from './direct-gateway-broker'
 
   const TRUSTLESS_GATEWAYS = [
     'https://trustless-gateway.link',
@@ -282,10 +282,7 @@
         blockBrokers: [
           bitswap(),
           trustlessGateway(),
-        ],
-        routers: [
-          libp2pRouting(libp2p),
-          httpGatewayRouting({ gateways: TRUSTLESS_GATEWAYS }),
+          () => new DirectGatewayBroker(TRUSTLESS_GATEWAYS) as any,
         ],
       })
 
