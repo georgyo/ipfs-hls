@@ -282,7 +282,7 @@
         blockBrokers: [
           bitswap(),
           trustlessGateway(),
-          () => new DirectGatewayBroker(TRUSTLESS_GATEWAYS) as any,
+          (() => new DirectGatewayBroker(TRUSTLESS_GATEWAYS)) as typeof bitswap(),
         ],
       })
 
