@@ -2,6 +2,7 @@
   import Hls from 'hls.js'
   import type { FragmentLoaderConstructor, PlaylistLoaderConstructor, Level } from 'hls.js'
   import { createHelia, libp2pDefaults } from 'helia'
+  import { bitswap } from '@helia/block-brokers'
   import { IDBBlockstore } from 'blockstore-idb'
   import { webRTC, webRTCDirect } from '@libp2p/webrtc'
   import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'
@@ -9,6 +10,13 @@
   import { simpleMetrics } from '@libp2p/simple-metrics'
   import { multiaddr } from '@multiformats/multiaddr'
   import { createIpfsLoader } from 'hls-ipfs-loader'
+  import { DirectGatewayBroker } from './direct-gateway-broker'
+
+  const TRUSTLESS_GATEWAYS = [
+    'https://trustless-gateway.link',
+    'https://4everland.io',
+    'https://dweb.link',
+  ]
 
   const ICE_SERVERS: RTCIceServer[] = [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
@@ -268,7 +276,14 @@
       })
       const blockstore = new IDBBlockstore('ipfs-hls-blocks')
       await blockstore.open()
-      heliaNode = await createHelia({ libp2p, blockstore })
+      heliaNode = await createHelia({
+        libp2p,
+        blockstore,
+        blockBrokers: [
+          bitswap(),
+          () => new DirectGatewayBroker(TRUSTLESS_GATEWAYS),
+        ],
+      })
 
       setStatus('Helia node ready. Initializing HLS player...', 'loading')
       const IpfsLoader = createIpfsLoader({ helia: heliaNode })
