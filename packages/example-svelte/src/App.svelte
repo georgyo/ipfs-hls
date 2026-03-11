@@ -2,7 +2,7 @@
   import Hls from 'hls.js'
   import type { FragmentLoaderConstructor, PlaylistLoaderConstructor, Level } from 'hls.js'
   import { createHelia, libp2pDefaults } from 'helia'
-  import { bitswap, trustlessGateway } from '@helia/block-brokers'
+  import { bitswap } from '@helia/block-brokers'
   import { IDBBlockstore } from 'blockstore-idb'
   import { webRTC, webRTCDirect } from '@libp2p/webrtc'
   import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'
@@ -281,8 +281,7 @@
         blockstore,
         blockBrokers: [
           bitswap(),
-          trustlessGateway(),
-          (() => new DirectGatewayBroker(TRUSTLESS_GATEWAYS)) as typeof bitswap(),
+          () => new DirectGatewayBroker(TRUSTLESS_GATEWAYS),
         ],
       })
 
