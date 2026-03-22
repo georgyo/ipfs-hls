@@ -16,7 +16,6 @@
   "include": [],
   "references": [
     { "path": "packages/hls-ipfs-loader" },
-    { "path": "packages/example-player" },
     { "path": "packages/example-svelte" },
     { "path": "tests/e2e" }
   ]
