@@ -21,14 +21,14 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@helia/unixfs": "^7.0.4",
-    "helia": "^6.0.21",
+    "@helia/unixfs": "^7.1.0",
+    "helia": "^6.0.22",
     "hls.js": "^1.6.15"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.57.0",
-    "@typescript-eslint/parser": "^8.57.0",
-    "eslint": "^10.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.57.1",
+    "@typescript-eslint/parser": "^8.57.1",
+    "eslint": "^10.1.0",
     "vitest": "^4.1.0"
   }
 }
