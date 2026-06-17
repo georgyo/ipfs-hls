@@ -2,6 +2,7 @@
   import Hls from 'hls.js'
   import type { FragmentLoaderConstructor, PlaylistLoaderConstructor, Level } from 'hls.js'
   import { createHelia, libp2pDefaults } from 'helia'
+  import type { Helia } from '@helia/interface'
   import { bitswap } from '@helia/block-brokers'
   import { IDBBlockstore } from 'blockstore-idb'
   import { webRTC, webRTCDirect } from '@libp2p/webrtc'
@@ -51,7 +52,7 @@
   let currentLevel = $state(-1)
   let videoEl: HTMLVideoElement
   let hls: Hls | null = null
-  let heliaNode = $state<Awaited<ReturnType<typeof createHelia>> | null>(null)
+  let heliaNode = $state<Helia | null>(null)
   let peers = $state<PeerInfo[]>([])
   let showPeers = $state(false)
   let cacheSize = $state('')
@@ -261,13 +262,12 @@
       const rtcConfig: RTCConfiguration = { iceServers: ICE_SERVERS }
       const libp2p = libp2pDefaults()
       libp2p.transports = [
-        circuitRelayTransport({ discoverRelays: 1 }),
+        circuitRelayTransport(),
         webRTC({ rtcConfiguration: rtcConfig }),
         webRTCDirect({ rtcConfiguration: rtcConfig }),
         webSockets(),
       ]
       libp2p.connectionManager = {
-        minConnections: 5,
         maxConnections: 100,
       }
       libp2p.metrics = simpleMetrics({
