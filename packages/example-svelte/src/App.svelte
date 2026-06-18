@@ -272,6 +272,12 @@
       const rtcConfig: RTCConfiguration = { iceServers: ICE_SERVERS }
       const libp2p = libp2pDefaults()
       libp2p.transports = [
+        // Relay discovery is automatic in @libp2p/circuit-relay-v2 v3+: the old
+        // `discoverRelays` option was removed, and the transport now always runs
+        // a RelayDiscovery service that finds HOP-capable peers and reserves
+        // slots on them (up to `maxReservations`, default 15). So we still
+        // discover and use public relays — needed for inbound dials and WebRTC
+        // signaling behind NAT — without any explicit option.
         circuitRelayTransport(),
         webRTC({ rtcConfiguration: rtcConfig }),
         webRTCDirect({ rtcConfiguration: rtcConfig }),

@@ -57,7 +57,7 @@ function makeStats(): LoaderStats {
 }
 
 /** Default cap for the resolved-path cache (number of entries). */
-const DEFAULT_PATH_CACHE_SIZE = 256
+const DEFAULT_PATH_CACHE_SIZE = 16_384
 
 /**
  * A small LRU cache keyed by resolved path string. Bounds memory in
