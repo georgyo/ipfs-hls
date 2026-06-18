@@ -67,6 +67,12 @@
   let prevSent = 0
   let prevRecv = 0
   let prevTime = 0
+  // Cumulative bytes pulled via the HTTP gateway broker. These use plain
+  // `fetch()` and so bypass libp2p's transfer metrics — count them separately
+  // so the throughput estimate reflects gateway delivery too.
+  let gatewayBytes = 0
+  // Rolling download-throughput estimate (bits/sec) fed to HLS.js ABR.
+  let measuredBwBps = 0
 
   function formatRate(bytesPerSec: number): string {
     if (bytesPerSec < 1024) return `${Math.round(bytesPerSec)} B/s`
@@ -75,29 +81,53 @@
   }
 
   function updateBandwidth() {
-    if (!heliaNode?.libp2p.metrics) return
+    const now = Date.now()
+
     // `transferStats` is an implementation detail of @libp2p/simple-metrics and
     // isn't part of the public Metrics interface — access it defensively so a
     // library change degrades to "no reading" rather than throwing.
-    const metrics = heliaNode.libp2p.metrics as { transferStats?: unknown }
-    const stats = metrics.transferStats
-    if (!(stats instanceof Map)) return
-
-    const now = Date.now()
-    const sent = stats.get('global sent') ?? 0
-    const recv = stats.get('global received') ?? 0
+    let sent = 0
+    let recv = 0
+    const metrics = heliaNode?.libp2p.metrics as { transferStats?: unknown } | undefined
+    const stats = metrics?.transferStats
+    if (stats instanceof Map) {
+      sent = stats.get('global sent') ?? 0
+      recv = stats.get('global received') ?? 0
+    }
+    // Gateway (HTTP) bytes don't flow through libp2p, so add them in.
+    recv += gatewayBytes
 
     if (prevTime > 0) {
       const elapsed = (now - prevTime) / 1000
       if (elapsed > 0) {
-        downloadRate = formatRate((recv - prevRecv) / elapsed)
+        const downBps = (recv - prevRecv) / elapsed
+        downloadRate = formatRate(downBps)
         uploadRate = formatRate((sent - prevSent) / elapsed)
+        feedAbrEstimate(downBps)
       }
     }
 
     prevSent = sent
     prevRecv = recv
     prevTime = now
+  }
+
+  /**
+   * Drive HLS.js's bandwidth estimate from actually-measured IPFS download
+   * throughput. HLS.js's own estimator reads each segment's *fetch time* as
+   * throughput, but IPFS fetch time is dominated by latency (peer discovery,
+   * bitswap/gateway round-trips), so it reads a fast link as slow and parks at
+   * the lowest rendition. We instead jump the estimate up to the observed rate
+   * immediately and let it decay slowly while idle, so it doesn't collapse
+   * between segment fetches.
+   */
+  function feedAbrEstimate(downBps: number) {
+    const downBits = downBps * 8
+    measuredBwBps =
+      downBits > measuredBwBps ? downBits : Math.max(downBits, measuredBwBps * 0.9)
+    if (hls && measuredBwBps > 0) {
+      hls.bandwidthEstimate = measuredBwBps
+    }
   }
 
   function refreshMultiaddrs() {
@@ -297,7 +327,12 @@
         blockstore,
         blockBrokers: [
           bitswap(),
-          () => new DirectGatewayBroker(TRUSTLESS_GATEWAYS),
+          () => new DirectGatewayBroker(
+            TRUSTLESS_GATEWAYS,
+            undefined,
+            undefined,
+            (n) => { gatewayBytes += n },
+          ),
         ],
       })
 
@@ -314,6 +349,19 @@
       const IpfsLoader = createIpfsLoader({ helia: heliaNode })
 
       hls = new Hls({
+        // IPFS delivery is latency-bound, not bandwidth-bound, which defeats
+        // HLS.js's default ABR (it reads segment fetch time as throughput and
+        // pins playback to the lowest rendition). So we: start optimistic;
+        // skip the low-rate bitrate-test fragment; upswitch eagerly; and give
+        // the abandon-rules timer / buffer plenty of grace for IPFS latency.
+        // The actual level is then driven by a real measured-throughput
+        // estimate pushed via hls.bandwidthEstimate (see feedAbrEstimate).
+        abrEwmaDefaultEstimate: 10_000_000,
+        testBandwidth: false,
+        abrBandWidthUpFactor: 0.9,
+        maxStarvationDelay: 30,
+        maxLoadingDelay: 30,
+        maxBufferLength: 60,
         fLoader: IpfsLoader as unknown as FragmentLoaderConstructor,
         pLoader: IpfsLoader as unknown as PlaylistLoaderConstructor,
       })

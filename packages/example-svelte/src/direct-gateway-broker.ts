@@ -39,15 +39,18 @@ export class DirectGatewayBroker implements BlockBroker {
   private gateways: string[]
   private perFetchTimeoutMs: number
   private hedgeDelayMs: number
+  private onBytes?: (byteLength: number) => void
 
   constructor(
     gateways: string[],
     perFetchTimeoutMs = DEFAULT_PER_FETCH_TIMEOUT_MS,
     hedgeDelayMs = DEFAULT_HEDGE_DELAY_MS,
+    onBytes?: (byteLength: number) => void,
   ) {
     this.gateways = gateways
     this.perFetchTimeoutMs = perFetchTimeoutMs
     this.hedgeDelayMs = hedgeDelayMs
+    this.onBytes = onBytes
   }
 
   async retrieve(cid: CID, options: BlockRetrievalOptions = {}): Promise<Uint8Array> {
@@ -84,6 +87,9 @@ export class DirectGatewayBroker implements BlockBroker {
             throw new Error(`${gw} returned ${resp.status}`)
           }
           const block = new Uint8Array(await resp.arrayBuffer())
+          // Report downloaded bytes for throughput measurement (these bypass
+          // libp2p's transfer metrics since they arrive over plain fetch()).
+          this.onBytes?.(block.byteLength)
           // Verify the bytes hash to the requested CID. Without validateFn a
           // gateway is fully trusted to return correct content, so Helia should
           // always supply it — guard so we never hand back unverified blocks.
