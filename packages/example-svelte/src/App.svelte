@@ -53,6 +53,8 @@
   let videoEl: HTMLVideoElement
   let hls: Hls | null = null
   let heliaNode = $state<Helia | null>(null)
+  let blockstore: IDBBlockstore | null = null
+  let destroyed = false
   let peers = $state<PeerInfo[]>([])
   let showPeers = $state(false)
   let cacheSize = $state('')
@@ -74,8 +76,12 @@
 
   function updateBandwidth() {
     if (!heliaNode?.libp2p.metrics) return
-    const stats = (heliaNode.libp2p.metrics as any).transferStats as Map<string, number> | undefined
-    if (!stats) return
+    // `transferStats` is an implementation detail of @libp2p/simple-metrics and
+    // isn't part of the public Metrics interface — access it defensively so a
+    // library change degrades to "no reading" rather than throwing.
+    const metrics = heliaNode.libp2p.metrics as { transferStats?: unknown }
+    const stats = metrics.transferStats
+    if (!(stats instanceof Map)) return
 
     const now = Date.now()
     const sent = stats.get('global sent') ?? 0
@@ -111,7 +117,11 @@
   }
 
   function saveHistory() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
+    } catch {
+      // ignore — storage may be full, disabled, or unavailable (private mode)
+    }
   }
 
   function addToHistory(path: string) {
@@ -274,9 +284,9 @@
         onMetrics: () => {},
         intervalMs: 1000,
       })
-      const blockstore = new IDBBlockstore('ipfs-hls-blocks')
+      blockstore = new IDBBlockstore('ipfs-hls-blocks')
       await blockstore.open()
-      heliaNode = await createHelia({
+      const node = await createHelia({
         libp2p,
         blockstore,
         blockBrokers: [
@@ -284,6 +294,15 @@
           () => new DirectGatewayBroker(TRUSTLESS_GATEWAYS),
         ],
       })
+
+      // The component may have unmounted while Helia was starting up — if so,
+      // tear the node back down instead of leaking connections and the blockstore.
+      if (destroyed) {
+        await node.stop()
+        await blockstore.close()
+        return
+      }
+      heliaNode = node
 
       setStatus('Helia node ready. Initializing HLS player...', 'loading')
       const IpfsLoader = createIpfsLoader({ helia: heliaNode })
@@ -364,12 +383,17 @@
     videoEl?.addEventListener('pause', onVideoState)
     videoEl?.addEventListener('seeked', onVideoState)
     return () => {
+      destroyed = true
       clearInterval(cacheInterval)
       clearInterval(bwInterval)
       window.removeEventListener('hashchange', onHashChange)
       videoEl?.removeEventListener('pause', onVideoState)
       videoEl?.removeEventListener('seeked', onVideoState)
       hls?.destroy()
+      // Stop libp2p (closes peer connections) and the IDB blockstore so we
+      // don't leak resources across HMR reloads or component teardown.
+      void heliaNode?.stop()
+      void blockstore?.close()
     }
   })
 
@@ -390,7 +414,7 @@
 <main>
   <h1>IPFS HLS Player</h1>
 
-  <div class="status {statusClass}">{status}</div>
+  <div id="status" class="status {statusClass}">{status}</div>
 
   <form onsubmit={handleSubmit}>
     <input
@@ -401,7 +425,7 @@
     <button type="submit" disabled={statusClass === 'loading' && !heliaNode}>Load</button>
   </form>
 
-  <video bind:this={videoEl} controls></video>
+  <video id="player" bind:this={videoEl} controls></video>
 
   {#if levels.length > 1}
     <div class="quality-selector">

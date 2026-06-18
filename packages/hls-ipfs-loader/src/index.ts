@@ -56,6 +56,39 @@ function makeStats(): LoaderStats {
   }
 }
 
+/** Default cap for the resolved-path cache (number of entries). */
+const DEFAULT_PATH_CACHE_SIZE = 256
+
+/**
+ * A small LRU cache keyed by resolved path string. Bounds memory in
+ * long-lived sessions that load many distinct sources, while keeping the
+ * hot path (recently used prefixes) resident.
+ */
+class PathCache {
+  private map = new Map<string, CID>()
+
+  constructor(private readonly max: number = DEFAULT_PATH_CACHE_SIZE) {}
+
+  get(key: string): CID | undefined {
+    const value = this.map.get(key)
+    if (value !== undefined) {
+      // Refresh recency: re-insert so this key becomes most-recently-used.
+      this.map.delete(key)
+      this.map.set(key, value)
+    }
+    return value
+  }
+
+  set(key: string, value: CID): void {
+    if (this.map.has(key)) this.map.delete(key)
+    this.map.set(key, value)
+    if (this.map.size > this.max) {
+      const oldest = this.map.keys().next().value
+      if (oldest !== undefined) this.map.delete(oldest)
+    }
+  }
+}
+
 /**
  * Resolve an IPFS path with nested directories by walking the DAG using `ls`.
  * Uses a cache to skip already-resolved path prefixes.
@@ -64,7 +97,7 @@ async function resolveIpfsPath(
   fs: UnixFS,
   rootCid: CID,
   path: string,
-  pathCache: Map<string, CID>,
+  pathCache: PathCache,
 ): Promise<CID> {
   if (!path || path === '/') return rootCid
 
@@ -115,20 +148,62 @@ async function resolveIpfsPath(
 
 /**
  * Fetch content from IPFS via Helia UnixFS, returning the data as a single buffer.
+ *
+ * Progress is recorded into `stats` as chunks arrive so HLS.js can estimate
+ * bandwidth: `loading.first` marks time-to-first-chunk and `loaded` tracks
+ * bytes received. When the file size is known up front (via `stat`) the content
+ * is streamed directly into a single pre-sized buffer, avoiding the
+ * collect-then-copy double allocation.
  */
 async function fetchFromIpfs(
   fs: UnixFS,
   ipfsPath: IpfsPath,
-  pathCache: Map<string, CID>,
+  pathCache: PathCache,
+  stats: LoaderStats,
   signal?: AbortSignal,
 ): Promise<Uint8Array> {
   const resolvedCid = await resolveIpfsPath(fs, ipfsPath.cid, ipfsPath.path, pathCache)
+
+  // Best-effort: learn the size up front so we can fill one buffer instead of
+  // collecting chunks and copying them into a second allocation. Falls back to
+  // chunk collection if stat is unavailable or reports no usable size.
+  let preallocated: Uint8Array | null = null
+  try {
+    const stat = await fs.stat(resolvedCid, { signal })
+    const size = Number(stat.size)
+    if (Number.isSafeInteger(size) && size > 0) {
+      preallocated = new Uint8Array(size)
+    }
+  } catch {
+    // ignore — fall back to chunk collection below
+  }
+
+  const recordChunk = (byteLength: number): void => {
+    if (stats.chunkCount === 0) {
+      stats.loading.first = Math.max(performance.now(), stats.loading.start)
+    }
+    stats.chunkCount++
+    stats.loaded += byteLength
+  }
+
+  if (preallocated) {
+    const buffer = preallocated
+    let offset = 0
+    for await (const chunk of fs.cat(resolvedCid, { signal })) {
+      buffer.set(chunk, offset) // throws if content exceeds the declared size
+      offset += chunk.byteLength
+      recordChunk(chunk.byteLength)
+    }
+    // Trim if the content was shorter than the declared size (rare).
+    return offset === buffer.byteLength ? buffer : buffer.subarray(0, offset)
+  }
+
   const chunks: Uint8Array[] = []
   let totalLength = 0
-
   for await (const chunk of fs.cat(resolvedCid, { signal })) {
     chunks.push(chunk)
     totalLength += chunk.byteLength
+    recordChunk(chunk.byteLength)
   }
 
   const result = new Uint8Array(totalLength)
@@ -137,8 +212,19 @@ async function fetchFromIpfs(
     result.set(chunk, offset)
     offset += chunk.byteLength
   }
-
   return result
+}
+
+/**
+ * Return an exact-length ArrayBuffer for the given view. Avoids a copy when the
+ * view already spans its whole backing buffer (the common pre-sized case), and
+ * slices only when it's a partial view so no trailing bytes leak to HLS.js.
+ */
+function toArrayBuffer(data: Uint8Array): ArrayBuffer {
+  if (data.byteOffset === 0 && data.byteLength === data.buffer.byteLength) {
+    return data.buffer as ArrayBuffer
+  }
+  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer
 }
 
 /**
@@ -164,7 +250,7 @@ export function createIpfsLoader(
   config: IpfsLoaderConfig,
 ): new (hlsConfig: Hls['config']) => Loader<LoaderContext> {
   const fs = createUnixFs(config.helia)
-  const pathCache = new Map<string, CID>()
+  const pathCache = new PathCache()
 
   return class IpfsLoader implements Loader<LoaderContext> {
     context: LoaderContext | null = null
@@ -196,7 +282,7 @@ export function createIpfsLoader(
     private loadFromIpfs(
       ipfsPath: IpfsPath,
       context: LoaderContext,
-      _loaderConfig: LoaderConfiguration,
+      loaderConfig: LoaderConfiguration,
       callbacks: LoaderCallbacks<LoaderContext>,
     ): void {
       this.stats = makeStats()
@@ -204,24 +290,43 @@ export function createIpfsLoader(
 
       this.abortController = new AbortController()
 
-      fetchFromIpfs(fs, ipfsPath, pathCache, this.abortController.signal)
+      // Honor the HLS.js load timeout: an IPFS fetch with no available
+      // providers would otherwise hang indefinitely. On timeout we abort the
+      // in-flight fetch and report it via onTimeout (distinct from onError).
+      let timedOut = false
+      const timeoutMs = loaderConfig.timeout
+      const timeoutId =
+        timeoutMs > 0
+          ? setTimeout(() => {
+              timedOut = true
+              this.abortController?.abort()
+              callbacks.onTimeout(this.stats, context, this.defaultLoader)
+            }, timeoutMs)
+          : undefined
+
+      fetchFromIpfs(fs, ipfsPath, pathCache, this.stats, this.abortController.signal)
         .then((data) => {
-          if (this.stats.aborted) return
+          if (this.stats.aborted || timedOut) return
+          clearTimeout(timeoutId)
 
           this.stats.loaded = data.byteLength
           this.stats.total = data.byteLength
-          this.stats.loading.first = performance.now()
           this.stats.loading.end = performance.now()
+          // Mirror HLS.js's own fetch-loader bandwidth estimate (bits/sec).
+          const transferMs = this.stats.loading.end - this.stats.loading.first
+          this.stats.bwEstimate =
+            transferMs > 0 ? (this.stats.total * 8000) / transferMs : 0
 
           const response =
             context.responseType === 'arraybuffer'
-              ? { url: context.url, data: data.buffer as ArrayBuffer }
+              ? { url: context.url, data: toArrayBuffer(data) }
               : { url: context.url, data: new TextDecoder().decode(data) }
 
           callbacks.onSuccess(response, this.stats, context, undefined)
         })
         .catch((error: unknown) => {
-          if (this.stats.aborted) return
+          if (this.stats.aborted || timedOut) return
+          clearTimeout(timeoutId)
 
           const message =
             error instanceof Error ? error.message : 'Unknown IPFS error'
